@@ -2,5 +2,15 @@
 	"FileVersion": 3,
 	"EngineAssociation": "4.23",
 	"Category": "",
-	"Description": ""
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "Line_Climber_Iter",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	]
 }
