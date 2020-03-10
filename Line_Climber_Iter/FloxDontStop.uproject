@@ -25,7 +25,7 @@
 		},
 		{
 			"Name": "MegascansPlugin",
-			"Enabled": true,
+			"Enabled": false,
 			"SupportedTargetPlatforms": [
 				"Win64",
 				"Mac",
@@ -34,7 +34,7 @@
 		},
 		{
 			"Name": "HoudiniEngine",
-			"Enabled": true
+			"Enabled": false
 		}
 	]
 }
