@@ -1,3 +1,0 @@
-C:\Users\u1274838\Desktop\Line_Climber_Iter\Intermediate\Build\Win64\UE4\Development\Line_Climber_Iter\Definitions.Line_Climber_Iter.h
-C:\Program Files\Epic Games\UE_4.23\Engine\Source\Runtime\CoreUObject\Public\UObject/GeneratedCppIncludes.h
-C:\Program Files\Epic Games\UE_4.23\Engine\Source\Runtime\CoreUObject\Public\UObject/MetaData.h

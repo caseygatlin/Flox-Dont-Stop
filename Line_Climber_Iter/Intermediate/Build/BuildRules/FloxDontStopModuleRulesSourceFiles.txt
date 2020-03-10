@@ -1,3 +1,0 @@
-C:\Users\u1274838\Desktop\Line_Climber_Iter\Source\Line_Climber_Iter\Line_Climber_Iter.Build.cs
-C:\Users\u1274838\Desktop\Line_Climber_Iter\Source\Line_Climber_Iter.Target.cs
-C:\Users\u1274838\Desktop\Line_Climber_Iter\Source\Line_Climber_IterEditor.Target.cs
