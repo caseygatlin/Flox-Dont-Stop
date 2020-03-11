@@ -2,12 +2,15 @@
 
 
 #include "Public/Gamecode/Flox.h"
+
 #include "Components/InputComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include <EngineGlobals.h>
 #include <Runtime/Engine/Classes/Engine/Engine.h>
 
@@ -30,6 +33,14 @@ AFlox::AFlox()
     static ConstructorHelpers::FObjectFinder<UCurveFloat> DashCurve(TEXT("/Game/Curves/C_DashCurve"));
     check(DashCurve.Succeeded());
     FloatCurveDash = DashCurve.Object;
+
+    
+
+    static ConstructorHelpers::FObjectFinder<USkeletalMesh> BirdMesh (TEXT(
+        "SkeletalMesh'/Game/Character/BirdCharacter_Customizable.BirdCharacter_Customizable'"));
+
+    USkeletalMeshComponent* playerMeshComponent = GetMesh();
+    playerMeshComponent->SetSkeletalMesh(BirdMesh.Object);
 
     DashUI = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DashUI"));
     DashUI->SetVisibility(false);
