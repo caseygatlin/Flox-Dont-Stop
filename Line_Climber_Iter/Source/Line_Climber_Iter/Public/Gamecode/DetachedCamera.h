@@ -25,6 +25,29 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+#if WITH_EDITOR
+
+    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+    // Called after an actor has been moved in the editor
+    virtual void PostEditMove(bool bFinished);
+
+#endif // WITH_EDITOR
+
+
+#pragma region Public Methods
+
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Detached Camera|Tracking")
+        void TrackPlayer(float i_VerticalOffset, float i_DistanceFromPlayer);
+
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Detached Camera|Tracking")
+        void AttachToPlayer(float i_VerticalOffset, float i_DistanceFromPlayer);
+
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Detached Camera|Scrolling")
+        void ScrollUp(float i_DistanceFromPlayer);
+
+#pragma endregion
+
 
 #pragma region Public Variables
 
@@ -42,6 +65,19 @@ public:
 
     UPROPERTY(EditAnywhere, Category = "Player")
         AFlox* Flox;
+
+#pragma endregion
+
+#pragma region Movement
+
+    UPROPERTY(EditAnywhere, Category = "Movement Settings")
+        float VerticalOffset = 0.f;
+
+    UPROPERTY(EditAnywhere, Category = "Movement Settings")
+        float DistanceFromPlayer = 1000.f;
+
+    UPROPERTY(EditAnywhere, Category = "Movement Settings")
+        float ScrollSpeed = 1.f;
 
 #pragma endregion
 

@@ -2,33 +2,8 @@
 
 
 #include "Public/GamecodeHelpers.h"
-#include "Engine/World.h"
-#include "EngineUtils.h"
 #include <EngineGlobals.h>
 #include <Runtime/Engine/Classes/Engine/Engine.h>
-
-//template<class T>
-//bool UGamecodeHelpers::GetFirstActorOfClass(T* o_FoundActor)
-//{
-//    TArray<T*> allInputActors;
-//    for (TActorIterator<T> It(GetWorld(), T::StaticClass()); It; ++It)
-//    {
-//        T* Actor = Cast<T>(*It);
-//        if (Actor && !Actor->IsPendingKill())
-//        {
-//            allInputActors.Add(Actor);
-//        }
-//    }
-//
-//    if (allInputActors.Num() <= 0)
-//    {
-//        return false;
-//    }
-//
-//    o_FoundActor = allInputActors[0];
-//
-//    return true;
-//}
 
 void UGamecodeHelpers::DebugPrintLog(FString i_StringToPrint)
 {

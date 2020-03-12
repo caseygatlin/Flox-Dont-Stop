@@ -17,6 +17,10 @@ ADetachedCamera::ADetachedCamera()
     SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring Arm"));
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 
+    SpringArm->TargetArmLength = DistanceFromPlayer;
+
+    Camera->SetupAttachment(SpringArm);
+    SetRootComponent(SpringArm);
 
 
 }
@@ -26,14 +30,16 @@ void ADetachedCamera::BeginPlay()
 {
 	Super::BeginPlay();
 	
-    //if (!IsValid(Flox))
-    //{
-    //    if (!UGamecodeHelpers::GetFirstActorOfClass<AFlox>(Flox))
-    //    {
-    //        UGamecodeHelpers::DebugPrintScreen(FString("Failed to find Flox player character in the current level."));
-    //    }
-    //}
+    if (!IsValid(Flox))
+    {
+        if (!UGamecodeHelpers::GetFirstActorOfClass<AFlox>(this, Flox))
+        {
+            UGamecodeHelpers::DebugPrintScreen(FString("Detached Camera failed to find Flox player character in the current level."));
+            return;
+        }
+    }
 
+    AttachToPlayer(VerticalOffset, DistanceFromPlayer);
 }
 
 // Called every frame
@@ -41,7 +47,72 @@ void ADetachedCamera::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+    if (IsValid(Flox))
+    {
+        FVector floxLocation = Flox->GetActorLocation();
+        FVector cameraLocation = SpringArm->GetComponentLocation();
+        FVector floxVelocity = Flox->GetVelocity();
+
+        bool isFloxHigher = floxLocation.Z >= cameraLocation.Z;
+        bool isFloxRising = floxVelocity.Z > 0.1f;
+
+        if (isFloxHigher && isFloxRising)
+        {
+            TrackPlayer(VerticalOffset, DistanceFromPlayer);
+        }
+        else
+        {
+            ScrollUp(DistanceFromPlayer);
+        }
+    }
+}
 
 
+#if WITH_EDITOR
+
+void ADetachedCamera::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+    Super::PostEditChangeProperty(PropertyChangedEvent);
+
+    AttachToPlayer(VerticalOffset, DistanceFromPlayer);
+}
+
+void ADetachedCamera::PostEditMove(bool bFinished)
+{
+    Super::PostEditMove(bFinished);
+
+    AttachToPlayer(VerticalOffset, DistanceFromPlayer);
+}
+
+#endif // WITH_EDITOR
+
+
+void ADetachedCamera::TrackPlayer(float i_VerticalOffset, float i_DistanceFromPlayer)
+{
+    if (IsValid(Flox))
+    {
+        SpringArm->TargetArmLength = i_DistanceFromPlayer;
+        FVector floxLocation = Flox->GetActorLocation();
+        FVector cameraLocation = SpringArm->GetComponentLocation();
+        FVector cameraTrackingLocation = FVector(cameraLocation.X, cameraLocation.Y, floxLocation.Z + i_VerticalOffset);
+
+        RootComponent->SetWorldLocation(cameraTrackingLocation);
+    }
+}
+
+void ADetachedCamera::AttachToPlayer(float i_VerticalOffset, float i_DistanceFromPlayer)
+{
+    if (IsValid(Flox))
+    {
+        SpringArm->TargetArmLength = i_DistanceFromPlayer;
+        FVector floxLocation = Flox->GetActorLocation();
+        RootComponent->SetWorldLocation(floxLocation + FVector::UpVector * i_VerticalOffset);
+    }
+}
+
+void ADetachedCamera::ScrollUp(float i_DistanceFromPlayer)
+{
+    SpringArm->TargetArmLength = i_DistanceFromPlayer;
+    RootComponent->AddWorldOffset(FVector(0.f, 0.f, ScrollSpeed));
 }
 
