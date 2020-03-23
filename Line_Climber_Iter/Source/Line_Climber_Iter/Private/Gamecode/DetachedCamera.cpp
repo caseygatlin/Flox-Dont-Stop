@@ -5,6 +5,8 @@
 #include "Public/GamecodeHelpers.h"
 #include "Public/Gamecode/Flox.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "Engine/World.h"
 #include "Camera/CameraComponent.h"
 
 
@@ -21,6 +23,8 @@ ADetachedCamera::ADetachedCamera()
 
     Camera->SetupAttachment(SpringArm);
     SetRootComponent(SpringArm);
+
+    RootComponent->SetWorldRotation(FRotator(0.f, 180.f, 0.f));
 
 
 }
@@ -40,6 +44,9 @@ void ADetachedCamera::BeginPlay()
     }
 
     AttachToPlayer(VerticalOffset, DistanceFromPlayer);
+
+    APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+    playerController->SetViewTarget(this);
 }
 
 // Called every frame

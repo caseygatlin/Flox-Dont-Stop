@@ -41,6 +41,10 @@ AFlox::AFlox()
 
     USkeletalMeshComponent* playerMeshComponent = GetMesh();
     playerMeshComponent->SetSkeletalMesh(BirdMesh.Object);
+    playerMeshComponent->SetRelativeScale3D(FVector(20.f, 20.f, 20.f));
+    playerMeshComponent->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+    playerMeshComponent->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
+    playerMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, -95.f));
 
     DashUI = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DashUI"));
     DashUI->SetVisibility(false);
