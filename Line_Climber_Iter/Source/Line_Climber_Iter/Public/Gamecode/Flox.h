@@ -19,11 +19,9 @@ public:
     // Sets default values for this character's properties
     AFlox();
 
-protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
 
-public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
@@ -31,45 +29,45 @@ public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
     // Timeline for Jumping
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         UTimelineComponent* JumpTimeline;
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         UCurveFloat* FloatCurveJump;
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Flox|Timelines")
         void JumpTimelineCallback(float i_val);
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Flox|Timelines")
         void JumpTimelineFinishedCallback();
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         TEnumAsByte<ETimelineDirection::Type> JumpTimelineDirection;
 
     void PlayJumpTimeline();
 
 
     // Timeline for waiting while in air
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         UTimelineComponent* WaitTimeline;
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         UCurveFloat* FloatCurveWait;
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Flox|Timelines")
         void WaitTimelineCallback(float i_val);
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Flox|Timelines")
         void WaitTimelineFinishedCallback();
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         TEnumAsByte<ETimelineDirection::Type> WaitTimelineDirection;
 
-    inline void PlayWaitTimeline();
+    void PlayWaitTimeline();
 
 
     // Timeline for Dashing
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         UTimelineComponent* DashTimeline;
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         UCurveFloat* FloatCurveDash;
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Flox|Timelines")
         void DashTimelineCallback(float i_val);
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category = "Gamecode|Flox|Timelines")
         void DashTimelineFinishedCallback();
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, Category = "Timelines")
         TEnumAsByte<ETimelineDirection::Type> DashTimelineDirection;
 
     void PlayDashTimeline();
@@ -100,13 +98,11 @@ public:
     void DrawDashUI();
 
 private:
-    void            SetupJumpTimeline();
-    void            SetupWaitTimeline();
-    void            SetupDashTimeline();
-    void            SetupTimelines(UCurveFloat* i_jumpTimeline,
-        UCurveFloat* i_waitTimeline,
-        UCurveFloat* i_dashTimeline);
-    inline void     UpdateTimeline(UTimelineComponent* i_timeLine, float i_dt);
+    void    SetupJumpTimeline();
+    void    SetupWaitTimeline();
+    void    SetupDashTimeline();
+    void    SetupTimelines(UCurveFloat* i_jumpTimeline, UCurveFloat* i_waitTimeline, UCurveFloat* i_dashTimeline);
+    void    UpdateTimeline(UTimelineComponent* i_timeLine, float i_dt);
 
     bool    m_bPastEdge;
     bool    m_bIsAiming;
@@ -120,7 +116,7 @@ private:
     float   m_fEdgeTop;
     float   m_fEdgeBottom;
     float   m_fPositionToHold;
-    float   m_fOriginGravityScale;
+    float   m_fOriginGravityScale = 4.f;
     float   m_fCastLength;
     float   m_fDashTargetRayCastObjects;
     float   m_fDashDampen;

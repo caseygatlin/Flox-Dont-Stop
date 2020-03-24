@@ -10,6 +10,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "NavArea_Obstacle.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include <EngineGlobals.h>
 #include <Runtime/Engine/Classes/Engine/Engine.h>
@@ -22,6 +24,8 @@ AFlox::AFlox()
     // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
 
+
+    // Timeline initialization
     static ConstructorHelpers::FObjectFinder<UCurveFloat> JumpCurve(TEXT("/Game/Curves/C_JumpCurve"));
     check(JumpCurve.Succeeded());
     FloatCurveJump = JumpCurve.Object;
@@ -34,29 +38,68 @@ AFlox::AFlox()
     check(DashCurve.Succeeded());
     FloatCurveDash = DashCurve.Object;
 
-    
+    UCapsuleComponent* capsuleComponent = GetCapsuleComponent();
+    capsuleComponent->SetCapsuleHalfHeight(96.f);
+    capsuleComponent->SetCapsuleRadius(42.f);
 
+    // Skeletal mesh component initialization
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> BirdMesh (TEXT(
         "SkeletalMesh'/Game/Character/BirdCharacter_Customizable.BirdCharacter_Customizable'"));
+
+    static ConstructorHelpers::FObjectFinder<UClass> ClothingSimulationClass (TEXT(
+        "Class'/Script/ClothingSystemRuntime.ClothingSimulationFactoryNv'"));
 
     USkeletalMeshComponent* playerMeshComponent = GetMesh();
     playerMeshComponent->SetSkeletalMesh(BirdMesh.Object);
     playerMeshComponent->SetRelativeScale3D(FVector(20.f, 20.f, 20.f));
     playerMeshComponent->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
     playerMeshComponent->SetAnimationMode(EAnimationMode::Type::AnimationBlueprint);
+    playerMeshComponent->ClothingSimulationFactory = ClothingSimulationClass.Object;
     playerMeshComponent->SetRelativeLocation(FVector(0.f, 0.f, -95.f));
 
+
+    // Dash UI component initialization
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> DashUIMesh (TEXT(
+        "StaticMesh'/Game/Models/Dash_UI.Dash_UI'"));
+
     DashUI = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DashUI"));
+    DashUI->SetStaticMesh(DashUIMesh.Object);
     DashUI->SetVisibility(false);
+    DashUI->SetGenerateOverlapEvents(false);
+    DashUI->SetCollisionProfileName("NoCollision");
+
+
+    // Dash Particles component initialization
+    static ConstructorHelpers::FObjectFinder<UParticleSystem> DashParticleSystem (TEXT(
+        "ParticleSystem'/Game/ParticleEffects/CharacterDash.CharacterDash'"));
 
     ParticleSystem = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("DashParticles"));
-    ParticleSystem->Deactivate();
-
+    ParticleSystem->SetTemplate(DashParticleSystem.Object);
+    ParticleSystem->bAutoActivate = false;
+    ParticleSystem->SetRelativeLocation(FVector(0.f, 0.f, -80.f));
     ParticleSystem->SetupAttachment(GetRootComponent());
 
 
+    // Character Movement component initialization
     m_charMovementComp = GetCharacterMovement();
+    m_charMovementComp->GravityScale = 2.f;
+    m_charMovementComp->GroundFriction = 3.f;
+    m_charMovementComp->JumpZVelocity = 700.f;
+    m_charMovementComp->AirControl = 0.8f;
+    m_charMovementComp->RotationRate = FRotator(0.f, 1080.f, 0.f);
+    m_charMovementComp->bOrientRotationToMovement = true;
+    m_charMovementComp->GetNavAgentPropertiesRef().AgentRadius = 42.f;
+    m_charMovementComp->GetNavAgentPropertiesRef().AgentHeight = 192.f;
+    m_charMovementComp->SetPlaneConstraintNormal(FVector(1.f, 0.f, 0.f));
+    m_charMovementComp->bConstrainToPlane = true;
 
+
+    // Add player tag
+    m_nPlayerTags.Add("Player");
+    Tags = m_nPlayerTags;
+
+    bUseControllerRotationYaw = false;
+    AutoPossessPlayer = EAutoReceiveInput::Type::Player0;
 }
 
 
@@ -201,14 +244,14 @@ void AFlox::SetupJumpTimeline()
     FOnTimelineFloat        onTimelineCallback;
     FOnTimelineEventStatic  onTimelineFinishedCallback;
 
-    JumpTimeline = NewObject<UTimelineComponent>(this, FName("TimelineAnimation"));
+    JumpTimeline = NewObject<UTimelineComponent>(this, FName("Jump Timeline"));
     JumpTimeline->CreationMethod = EComponentCreationMethod::UserConstructionScript;
 
     this->BlueprintCreatedComponents.Add(JumpTimeline);
 
     JumpTimeline->SetNetAddressable();
     JumpTimeline->SetPropertySetObject(this);
-    JumpTimeline->SetDirectionPropertyName(FName("TimelineDirection"));
+    JumpTimeline->SetDirectionPropertyName(FName("JumpTimelineDirection"));
     JumpTimeline->SetLooping(false);
     JumpTimeline->SetTimelineLength(.25f);
     JumpTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
@@ -230,14 +273,14 @@ void AFlox::SetupWaitTimeline()
     FOnTimelineFloat        onTimelineCallback;
     FOnTimelineEventStatic  onTimelineFinishedCallback;
 
-    WaitTimeline = NewObject<UTimelineComponent>(this, FName("TimelineAnimation"));
+    WaitTimeline = NewObject<UTimelineComponent>(this, FName("Wait Timeline"));
     WaitTimeline->CreationMethod = EComponentCreationMethod::UserConstructionScript;
 
     this->BlueprintCreatedComponents.Add(WaitTimeline);
 
     WaitTimeline->SetNetAddressable();
     WaitTimeline->SetPropertySetObject(this);
-    WaitTimeline->SetDirectionPropertyName(FName("TimelineDirection"));
+    WaitTimeline->SetDirectionPropertyName(FName("WaitTimelineDirection"));
     WaitTimeline->SetLooping(false);
     WaitTimeline->SetTimelineLength(1.5f);
     WaitTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
@@ -259,14 +302,14 @@ void AFlox::SetupDashTimeline()
     FOnTimelineFloat        onTimelineCallback;
     FOnTimelineEventStatic  onTimelineFinishedCallback;
 
-    DashTimeline = NewObject<UTimelineComponent>(this, FName("TimelineAnimation"));
+    DashTimeline = NewObject<UTimelineComponent>(this, FName("Dash Timeline"));
     DashTimeline->CreationMethod = EComponentCreationMethod::UserConstructionScript;
 
     this->BlueprintCreatedComponents.Add(DashTimeline);
 
     DashTimeline->SetNetAddressable();
     DashTimeline->SetPropertySetObject(this);
-    DashTimeline->SetDirectionPropertyName(FName("TimelineDirection"));
+    DashTimeline->SetDirectionPropertyName(FName("DashTimelineDirection"));
     DashTimeline->SetLooping(false);
     DashTimeline->SetTimelineLength(.35f);
     DashTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
@@ -472,7 +515,7 @@ void AFlox::Walk(float i_axisVal)
 
     }
 
-    if (!m_bIsAiming && i_axisVal > 0)
+    if (!m_bIsAiming)
     {
 
         if (i_axisVal > 0)
