@@ -12,6 +12,8 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "NavArea_Obstacle.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Engine/SkeletalMesh.h"
 #include <EngineGlobals.h>
 #include <Runtime/Engine/Classes/Engine/Engine.h>
@@ -109,7 +111,7 @@ void AFlox::BeginPlay()
 
     Super::BeginPlay();
 
-    SetupTimelines(FloatCurveJump, FloatCurveWait, FloatCurveDash);
+    SetupTimelines();
     m_bPastEdge = false;
     m_iEdgeBlockCount = 0;
 
@@ -152,6 +154,7 @@ void AFlox::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
     PlayerInputComponent->BindAction("Aim", IE_Released, this, &AFlox::EndAim);
 
     PlayerInputComponent->BindAxis("MoveRight", this, &AFlox::Walk);
+    PlayerInputComponent->BindAxis("MoveUp", this, &AFlox::RecordUpVal);
 
 }
 
@@ -217,15 +220,24 @@ void AFlox::DrawDashUI()
         if (m_bIsAiming)
         {
 
-            FVector targetPoint = m_vDashDirection * m_fCastLength;
+            FVector targetPoint = m_vDashDirection * CastLength;
             targetPoint += GetActorLocation();
 
             m_vTargetPoint = targetPoint;
 
             FHitResult traceHit;
-            FCollisionQueryParams collisionParams;
+            TArray<AActor*> actorIgnoreList;
 
-            if (ActorLineTraceSingle(traceHit, GetActorLocation(), m_vTargetPoint, ECollisionChannel::ECC_WorldDynamic, collisionParams))
+            if (UKismetSystemLibrary::LineTraceSingleByProfile(
+                this,
+                GetActorLocation(),
+                m_vTargetPoint,
+                GetCapsuleComponent()->GetCollisionProfileName(),
+                true,
+                actorIgnoreList,
+                EDrawDebugTrace::Type::None,
+                traceHit,
+                true))
             {
                 m_vTargetPoint = traceHit.Location;
             }
@@ -254,7 +266,7 @@ void AFlox::SetupJumpTimeline()
     JumpTimeline->SetDirectionPropertyName(FName("JumpTimelineDirection"));
     JumpTimeline->SetLooping(false);
     JumpTimeline->SetTimelineLength(.25f);
-    JumpTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
+    JumpTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_TimelineLength);
     JumpTimeline->SetPlaybackPosition(0.0f, false);
 
     onTimelineCallback.BindUFunction(this, FName{ TEXT("JumpTimelineCallback") });
@@ -283,13 +295,13 @@ void AFlox::SetupWaitTimeline()
     WaitTimeline->SetDirectionPropertyName(FName("WaitTimelineDirection"));
     WaitTimeline->SetLooping(false);
     WaitTimeline->SetTimelineLength(1.5f);
-    WaitTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
+    WaitTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_TimelineLength);
     WaitTimeline->SetPlaybackPosition(0.0f, false);
 
     onTimelineCallback.BindUFunction(this, FName{ TEXT("WaitTimelineCallback") });
     onTimelineFinishedCallback.BindUFunction(this, FName{ TEXT("WaitTimelineFinishedCallback") });
 
-    WaitTimeline->AddInterpFloat(FloatCurveJump, onTimelineCallback);
+    WaitTimeline->AddInterpFloat(FloatCurveWait, onTimelineCallback);
     WaitTimeline->SetTimelineFinishedFunc(onTimelineFinishedCallback);
     WaitTimeline->RegisterComponent();
 
@@ -312,37 +324,37 @@ void AFlox::SetupDashTimeline()
     DashTimeline->SetDirectionPropertyName(FName("DashTimelineDirection"));
     DashTimeline->SetLooping(false);
     DashTimeline->SetTimelineLength(.35f);
-    DashTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
+    DashTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_TimelineLength);
     DashTimeline->SetPlaybackPosition(0.0f, false);
 
     onTimelineCallback.BindUFunction(this, FName{ TEXT("DashTimelineCallback") });
     onTimelineFinishedCallback.BindUFunction(this, FName{ TEXT("DashTimelineFinishedCallback") });
 
-    DashTimeline->AddInterpFloat(FloatCurveJump, onTimelineCallback);
+    DashTimeline->AddInterpFloat(FloatCurveDash, onTimelineCallback);
     DashTimeline->SetTimelineFinishedFunc(onTimelineFinishedCallback);
     DashTimeline->RegisterComponent();
 }
 
 
 // Set up timelines for use in player movement
-void AFlox::SetupTimelines(UCurveFloat* i_jumpTimeline, UCurveFloat* i_waitTimeline, UCurveFloat* i_dashTimeline)
+void AFlox::SetupTimelines()
 {
 
-    if (i_jumpTimeline != NULL)
+    if (FloatCurveJump != NULL)
     {
 
         SetupJumpTimeline();
 
     }
 
-    if (i_waitTimeline != NULL)
+    if (FloatCurveWait != NULL)
     {
 
         SetupWaitTimeline();
 
     }
 
-    if (i_dashTimeline != NULL)
+    if (FloatCurveDash != NULL)
     {
 
         SetupDashTimeline();
@@ -372,7 +384,12 @@ void AFlox::PlayJumpTimeline()
 }
 
 
-void AFlox::WaitTimelineCallback(float i_val) {}
+void AFlox::WaitTimelineCallback(float i_val) 
+{
+
+
+
+}
 
 
 // Bring gravity back to normal
@@ -426,7 +443,7 @@ void AFlox::PlayDashTimeline()
     if (DashTimeline != NULL)
     {
 
-        DashTimeline->Play();
+        DashTimeline->PlayFromStart();
 
     }
 }
@@ -508,16 +525,23 @@ void AFlox::Walk(float i_axisVal)
 
     m_fAxisMoveRightValue = i_axisVal;
 
-    if (i_axisVal == 0)
+    if (UKismetMathLibrary::EqualEqual_FloatFloat(i_axisVal, 0))
     {
 
         m_bIsWalking = false;
 
     }
 
-    if (!m_bIsAiming)
+    else if (!m_bIsAiming)
     {
 
+        AddMovementInput(FVector::LeftVector, i_axisVal);
+        m_bIsWalking = true;
+
+    }
+
+    if (!m_bIsAiming)
+    {
         if (i_axisVal > 0)
         {
 
@@ -531,10 +555,6 @@ void AFlox::Walk(float i_axisVal)
             m_vDefaultDashDir = FVector::RightVector;
 
         }
-
-        AddMovementInput(FVector::LeftVector, i_axisVal);
-        m_bIsWalking = true;
-
     }
 }
 

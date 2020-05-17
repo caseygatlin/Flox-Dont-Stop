@@ -179,6 +179,13 @@ public:
 
 #pragma endregion
 
+#pragma region Aiming
+
+    UPROPERTY(EditAnywhere, Category = "Aiming")
+        float CastLength;
+
+#pragma endregion
+
 #pragma endregion
 
 private:
@@ -190,7 +197,7 @@ private:
     void    SetupJumpTimeline();
     void    SetupWaitTimeline();
     void    SetupDashTimeline();
-    void    SetupTimelines(UCurveFloat* i_jumpTimeline, UCurveFloat* i_waitTimeline, UCurveFloat* i_dashTimeline);
+    void    SetupTimelines();
     void    UpdateTimeline(UTimelineComponent* i_timeLine, float i_dt);
 
 #pragma endregion
@@ -201,8 +208,7 @@ private:
 
 #pragma region Components
 
-    UPROPERTY(VisibleAnywhere, Category = "Components")
-        UCharacterMovementComponent* m_charMovementComp;
+    UCharacterMovementComponent* m_charMovementComp;
 
 #pragma endregion
 
@@ -226,9 +232,6 @@ private:
     UPROPERTY(VisibleAnywhere, Category = "Aiming")
         // If the player is currently able to aim.
         bool m_bCanAim;
-
-    UPROPERTY(VisibleAnywhere, Category = "Aiming")
-        float m_fCastLength;
 
     UPROPERTY(VisibleAnywhere, Category = "Aiming")
         float m_fDashTargetRayCastObjects;
