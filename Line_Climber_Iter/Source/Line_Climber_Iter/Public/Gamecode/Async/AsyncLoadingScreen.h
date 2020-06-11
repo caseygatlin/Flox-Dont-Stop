@@ -16,5 +16,14 @@ class LINE_CLIMBER_ITER_API UAsyncLoadingScreen : public UUserWidget
 
 public:
 
+	UAsyncLoadingScreen(const FObjectInitializer& ObjectInitializer);
+
+	virtual void NativeConstruct() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
+		class UTextBlock* LoadingText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
+		class UImage* SplashImage;
 	
 };
