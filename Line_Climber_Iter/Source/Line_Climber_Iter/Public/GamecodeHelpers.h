@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Async/TaskGraphInterfaces.h"
 #include "GamecodeHelpers.generated.h"
 
 /**
@@ -25,6 +26,8 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Libraries|Gamecode Helpers")
         static void DebugPrintScreen(FString i_StringToPrint, float i_TimeToDisplay = 5.f, FColor i_TextColor = FColor::Blue, int32 i_Key = -1);
+
+    static FGraphEventRef RunLambdaOnGameThread(TFunction<void()> i_Function);
 
     template<typename SubclassOfActor>
     UFUNCTION(BlueprintCallable, Category = "Libraries|Gamecode Helpers")

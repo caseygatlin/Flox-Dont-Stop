@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Async/AsyncLoadingScreen.h"
+#include "Blueprint/UserWidget.h"
 #include "CoreMinimal.h"
 #include "Async/AsyncWork.h"
 
@@ -8,12 +10,13 @@ class LoadingScreenTask : public FNonAbandonableTask
 {
 public:
 
-	/** Initializes references to the systems it needs to access during work.
-	 * @param       Reference to the Rendering core system.
-	 * @param       Reference to the Cluster Pools subsystem.
+	LoadingScreenTask() { }
+
+	/** Initializes references to loading screen and world that it needs during work.
+	 * @param       The Widget to use as the loading screen.
+	 * @param       A reference to the active world.
 	*/
-	LoadingScreenTask()
-	{}
+	LoadingScreenTask(UAsyncLoadingScreen* i_LoadingScreenWidget);
 
 	/**Destructor.*/
 	~LoadingScreenTask()
@@ -34,7 +37,7 @@ public:
 
 #pragma region Public Variables
 
-
+	UAsyncLoadingScreen* LoadingScreenWidget;
 
 #pragma endregion
 

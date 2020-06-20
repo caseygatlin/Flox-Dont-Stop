@@ -26,3 +26,8 @@ void UGamecodeHelpers::DebugPrintScreen(FString i_StringToPrint, float i_TimeToD
 #endif // UE_BUILD_DEBUG
 
 }
+
+FGraphEventRef UGamecodeHelpers::RunLambdaOnGameThread(TFunction<void()> i_Function)
+{
+    return FFunctionGraphTask::CreateAndDispatchWhenReady(i_Function, TStatId(), nullptr, ENamedThreads::GameThread);
+}
