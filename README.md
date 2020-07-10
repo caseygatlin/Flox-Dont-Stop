@@ -3,7 +3,7 @@ A cooperative endless climber that meshes strategic platform placement with care
 
 # Description
 
-Flox Dont Stop is a cooperative endless climber that meshes strategic platform placement with careful character maneuvering. This game has been developed by myself and 5 other awesome people and is currently in development for a Steam release. You can check out the prototype made in two weeks on [Itch.io](https://gatlincasey.itch.io/flox-dont-stop) if you'd like to download and play the game.
+This game has been developed by myself and 5 other awesome people and is currently in development for a Steam release. You can check out the prototype made in two weeks on [Itch.io](https://gatlincasey.itch.io/flox-dont-stop) if you'd like to download and play the game.
 
 # Contributions
 
